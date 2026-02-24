@@ -1,0 +1,55 @@
+﻿<Window x:Class="LibraryProject.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Управление библиотекой" Height="600" Width="1000" WindowStartupLocation="CenterScreen">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> 
+            <RowDefinition Height="*"/>    
+            <RowDefinition Height="Auto"/> 
+        </Grid.RowDefinitions>
+
+        <!-- Фильтры -->
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,15">
+            <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBox x:Name="txtSearch" Width="150" TextChanged="FilterData"/>
+            
+            <TextBlock Text="Автор:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+            <ComboBox x:Name="cbAuthorFilter" Width="150" DisplayMemberPath="FullName" SelectionChanged="FilterData"/>
+            
+            <TextBlock Text="Жанр:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+            <ComboBox x:Name="cbGenreFilter" Width="150" DisplayMemberPath="Name" SelectionChanged="FilterData"/>
+            
+            <Button Content="Сбросить" Margin="15,0,0,0" Padding="10,2" Click="ResetFilters"/>
+        </StackPanel>
+
+        <!-- Таблица книг -->
+        <DataGrid x:Name="dgBooks" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="*"/>
+                <DataGridTextColumn Header="Авторы" Binding="{Binding AuthorsDisplay}" Width="1.5*"/>
+                <DataGridTextColumn Header="Жанры" Binding="{Binding GenresDisplay}" Width="*"/>
+                <DataGridTextColumn Header="ISBN" Binding="{Binding ISBN}" Width="110"/>
+                <DataGridTextColumn Header="Год" Binding="{Binding PublishYear}" Width="60"/>
+                <DataGridTextColumn Header="На складе" Binding="{Binding QuantityInStock}" Width="80"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- кнопки -->
+        <DockPanel Grid.Row="2" Margin="0,15,0,0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Всего книг в наличии: " VerticalAlignment="Center" FontSize="14" FontWeight="Bold"/>
+                <TextBlock x:Name="lblTotalStock" Text="0" VerticalAlignment="Center" FontSize="14" FontWeight="Bold" Foreground="Blue"/>
+            </StackPanel>
+            
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="АВТОРЫ" Click="ManageAuthors_Click" Width="100" Margin="5,0"/>
+                <Button Content="ЖАНРЫ" Click="ManageGenres_Click" Width="100" Margin="5,0"/>
+                <Separator Width="20" Background="Transparent"/>
+                <Button Content="ДОБАВИТЬ КНИГУ" Click="AddBook_Click" Width="140" Margin="5,0" Background="LightGreen"/>
+                <Button Content="ИЗМЕНИТЬ" Click="EditBook_Click" Width="100" Margin="5,0" Background="LightYellow"/>
+                <Button Content="УДАЛИТЬ" Click="DeleteBook_Click" Width="90" Margin="5,0" Background="LightCoral"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>
