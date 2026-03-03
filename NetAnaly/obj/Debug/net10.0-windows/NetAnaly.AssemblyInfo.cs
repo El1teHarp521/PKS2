@@ -10,12 +10,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("LibraryProject")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("NetAnaly")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2ca8a835b2e2ec575caeb7fd3e9331388424d4aa")]
-[assembly: System.Reflection.AssemblyProductAttribute("LibraryProject")]
-[assembly: System.Reflection.AssemblyTitleAttribute("LibraryProject")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyProductAttribute("NetAnaly")]
+[assembly: System.Reflection.AssemblyTitleAttribute("NetAnaly")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows7.0")]

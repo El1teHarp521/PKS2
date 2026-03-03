@@ -1,0 +1,9 @@
+### Контрольная работа 1
+```bash
+cd LibraryProject
+```
+
+### Контрольная работа 2
+```bash
+cd NetAnaly
+```
