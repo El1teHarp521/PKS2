@@ -7,3 +7,8 @@ cd LibraryProject
 ```bash
 cd NetAnaly
 ```
+
+### Контрольная работа 3
+```bash
+cd MonitorSys
+```
