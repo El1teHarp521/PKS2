@@ -1,0 +1,37 @@
+@model IEnumerable<TouristGuide.Models.City>
+@{ ViewData["Title"] = "Главная"; }
+
+<div class="container py-4">
+    <h1 class="text-center mb-5 fw-bold">Туристический путеводитель</h1>
+
+    <!-- Поиск -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <form asp-action="Index" method="get" class="d-flex shadow-sm rounded">
+                <input type="text" name="searchString" class="form-control form-control-lg border-0" placeholder="Введите название города для поиска...">
+                <button class="btn btn-primary btn-lg px-4" type="submit">Найти</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Сетка городов -->
+    <div class="row g-4">
+        @foreach (var city in Model)
+        {
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm overflow-hidden hover-shadow">
+                    <img src="@city.PhotoUrl" class="card-img-top" alt="@city.Name" style="height: 250px; object-fit: cover;">
+                    <div class="card-body">
+                        <h4 class="card-title fw-bold">@city.Name</h4>
+                        <p class="text-muted mb-2"><i class="bi bi-geo-alt"></i> @city.Region</p>
+                        <p class="card-text text-truncate-3">@city.History</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="badge bg-light text-dark border">@city.Population чел.</span>
+                            <a asp-action="Details" asp-route-id="@city.Id" class="btn btn-outline-primary">Посмотреть город</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,55 @@
+@model TouristGuide.Models.City
+@{ ViewData["Title"] = Model.Name; }
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Главная</a></li>
+            <li class="breadcrumb-item active">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-5">
+        <div class="col-lg-5 mb-4">
+            <div class="position-relative">
+                <img src="@Model.PhotoUrl" class="img-fluid rounded-4 shadow-lg w-100" alt="@Model.Name">
+                <div class="position-absolute top-0 end-0 m-3 p-2 bg-white rounded-circle shadow">
+                    <img src="@Model.CoatOfArmsUrl" alt="Герб" style="height: 60px;">
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <h1 class="display-4 fw-bold">@Model.Name</h1>
+            <p class="lead text-primary">@Model.Region</p>
+            <hr class="my-4">
+            <h5 class="fw-bold">О городе</h5>
+            <p class="text-secondary" style="line-height: 1.8;">@Model.History</p>
+            <div class="p-3 bg-light rounded-3 mt-4">
+                <i class="bi bi-people-fill me-2"></i> <strong>Население:</strong> @Model.Population.ToString("N0") человек
+            </div>
+        </div>
+    </div>
+
+    <h2 class="fw-bold mb-4 border-bottom pb-3">Что посетить в городе @Model.Name</h2>
+    <div class="row g-4">
+        @foreach (var attr in Model.Attractions)
+        {
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="row g-0">
+                        <div class="col-4">
+                            <img src="@attr.PhotoUrl" class="img-fluid rounded-start h-100 w-100" alt="@attr.Name" style="object-fit: cover;">
+                        </div>
+                        <div class="col-8">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold">@attr.Name</h5>
+                                <p class="card-text small text-muted">@attr.ShortDescription</p>
+                                <a asp-controller="Attractions" asp-action="Details" asp-route-id="@attr.Id" class="btn btn-sm btn-link p-0 text-decoration-none">Подробнее &rarr;</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
