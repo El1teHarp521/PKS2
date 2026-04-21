@@ -1,7 +1,5 @@
 @model IEnumerable<ProdSys.Models.Material>
-@{
-    ViewData["Title"] = "Склад материалов";
-}
+@{ ViewData["Title"] = "Склад материалов"; }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold">Панель материалов</h2>
@@ -14,36 +12,48 @@
             <thead class="table-light">
                 <tr>
                     <th>Название</th>
+                    <th style="width: 30%;">Состояние запаса</th>
                     <th>Текущее количество</th>
-                    <th>Ед. измерения</th>
-                    <th>Минимальный запас</th>
+                    <th>Мин. запас</th>
                     <th>Действия</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in Model)
                 {
-                    // Логика цветовой индикации: если количество меньше или равно минимальному
-                    bool isLowStock = item.Quantity <= item.MinimalStock;
-                    string rowClass = isLowStock ? "table-danger" : "";
+                    // ЛОГИКА ЦВЕТОВ:
+                    // < 100% от минимума = Красный
+                    // От 100% до 150% от минимума = Желтый
+                    // > 150% от минимума = Зеленый
+                    string colorClass = "bg-danger";
+                    
+                    if (item.Quantity >= item.MinimalStock * 1.5m) 
+                    { 
+                        colorClass = "bg-success"; 
+                    }
+                    else if (item.Quantity >= item.MinimalStock) 
+                    { 
+                        colorClass = "bg-warning text-dark"; 
+                    }
+                    decimal maxVisual = item.MinimalStock > 0 ? item.MinimalStock * 3.0m : 100;
+                    decimal percent = item.MinimalStock > 0 ? (item.Quantity / maxVisual) * 100 : 100;
+                    if (percent > 100) percent = 100;
+                    if (percent < 5) percent = 5;
 
-                    <tr class="@rowClass align-middle">
+                    <tr class="align-middle">
                         <td class="fw-bold">@item.Name</td>
                         <td>
-                            <span class="fs-5">@item.Quantity</span>
-                            @if (isLowStock)
-                            {
-                                <span class="badge bg-danger ms-2"><i class="bi bi-exclamation-triangle"></i> Низкий запас!</span>
-                            }
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar @colorClass progress-bar-striped" role="progressbar" style="width: @percent.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%;"></div>
+                            </div>
                         </td>
-                        <td>@item.UnitOfMeasure</td>
-                        <td>@item.MinimalStock</td>
+                        <td><span class="fs-5 fw-bold">@item.Quantity</span> @item.UnitOfMeasure</td>
+                        <td class="text-muted">@item.MinimalStock @item.UnitOfMeasure</td>
                         <td>
-                            <!-- Форма быстрого пополнения -->
                             <form asp-action="Replenish" method="post" class="d-flex align-items-center">
                                 <input type="hidden" name="id" value="@item.Id" />
-                                <input type="number" name="amount" value="50" min="1" class="form-control form-control-sm me-2" style="width: 80px;" title="Количество для пополнения" />
-                                <button type="submit" class="btn btn-sm btn-success">Пополнить</button>
+                                <input type="number" name="amount" value="50" min="1" class="form-control form-control-sm me-2" style="width: 80px;" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">Пополнить</button>
                             </form>
                         </td>
                     </tr>

@@ -1,0 +1,54 @@
+@model ProdSys.Models.Product
+@{ ViewData["Title"] = "Состав продукта"; }
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-secondary">&larr; Назад к продуктам</a>
+</div>
+
+<h2 class="fw-bold mb-4">Состав продукта: <span class="text-primary">@Model.Name</span></h2>
+
+<div class="row">
+    <!-- Список текущих материалов -->
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white fw-bold">Необходимые материалы (на 1 шт.)</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var pm in Model.ProductMaterials)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">@pm.Material.Name</span>
+                        <span class="badge bg-primary rounded-pill fs-6">@pm.QuantityNeeded @pm.Material.UnitOfMeasure</span>
+                    </li>
+                }
+                @if(!Model.ProductMaterials.Any())
+                {
+                    <li class="list-group-item text-muted">Состав пуст. Добавьте материалы.</li>
+                }
+            </ul>
+        </div>
+    </div>
+
+    <!-- Форма добавления нового материала в состав -->
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0 bg-light">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Добавить материал в состав</h5>
+                <form asp-action="AddMaterialToProduct" method="post">
+                    <input type="hidden" name="productId" value="@Model.Id" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Выберите материал</label>
+                        <select name="materialId" asp-items="ViewBag.AllMaterials" class="form-select" required></select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Количество на 1 шт. продукта</label>
+                        <input type="number" step="0.01" name="quantityNeeded" class="form-control" value="1" min="0.01" required />
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">Добавить в состав</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

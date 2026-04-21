@@ -12,3 +12,8 @@ cd NetAnaly
 ```bash
 cd MonitorSys
 ```
+
+### Контрольная работа 4
+```bash
+cd TouristGuide
+```

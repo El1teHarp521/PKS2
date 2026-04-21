@@ -18,28 +18,22 @@ namespace ProdSys.Controllers
             _context = context;
         }
 
-        // Страница со списком продукто
+        // Страница со списком продуктов
         public async Task<IActionResult> Index(string category, string searchString)
         {
-            // 1. Сначала применяем фильтры для базы данных
             var query = _context.Products.AsQueryable();
 
             if (!string.IsNullOrEmpty(category))
-            {
                 query = query.Where(p => p.Category == category);
-            }
 
-            // Выгружаем категории для выпадающего списка
             ViewBag.Categories = await _context.Products
                 .Where(p => p.Category != null)
                 .Select(p => p.Category)
                 .Distinct()
                 .ToListAsync();
 
-            // 2. Загружаем данные из БД в память
             var products = await query.ToListAsync();
 
-            // 3. Выполняем поиск по тексту средствами C#
             if (!string.IsNullOrEmpty(searchString))
             {
                 products = products
@@ -64,9 +58,8 @@ namespace ProdSys.Controllers
             if (ModelState.IsValid)
             {
                 _context.Products.Add(product);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(); 
 
-                // Привязываем выбранные материалы
                 if (selectedMaterials != null && selectedMaterials.Length > 0)
                 {
                     foreach (var materialId in selectedMaterials)
@@ -75,17 +68,49 @@ namespace ProdSys.Controllers
                         {
                             ProductId = product.Id,
                             MaterialId = materialId,
-                            QuantityNeeded = 1
+                            QuantityNeeded = 1 
                         });
                     }
                     await _context.SaveChangesAsync();
                 }
-
                 return RedirectToAction(nameof(Index));
             }
             
             ViewBag.Materials = new SelectList(_context.Materials, "Id", "Name");
             return View(product);
+        }
+
+        // Страница управления составом (Материалами) продукта
+        public async Task<IActionResult> Composition(int id)
+        {
+            var product = await _context.Products
+                .Include(p => p.ProductMaterials)
+                .ThenInclude(pm => pm.Material)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null) return NotFound();
+
+            ViewBag.AllMaterials = new SelectList(_context.Materials, "Id", "Name");
+            return View(product);
+        }
+
+        // Добавить материал в состав
+        [HttpPost]
+        public async Task<IActionResult> AddMaterialToProduct(int productId, int materialId, decimal quantityNeeded)
+        {
+            var existing = await _context.ProductMaterials.FirstOrDefaultAsync(pm => pm.ProductId == productId && pm.MaterialId == materialId);
+            
+            if (existing != null) {
+                existing.QuantityNeeded += quantityNeeded; 
+            } else {
+                _context.ProductMaterials.Add(new ProductMaterial {
+                    ProductId = productId,
+                    MaterialId = materialId,
+                    QuantityNeeded = quantityNeeded
+                });
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Composition), new { id = productId });
         }
     }
 }

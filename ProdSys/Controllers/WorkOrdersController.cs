@@ -18,7 +18,6 @@ namespace ProdSys.Controllers
             _context = context;
         }
 
-        // GET: Список всех заказов
         public async Task<IActionResult> Index()
         {
             var orders = await _context.WorkOrders
@@ -29,110 +28,83 @@ namespace ProdSys.Controllers
             return View(orders);
         }
 
-        // GET: Форма создания заказа
         public async Task<IActionResult> Create()
         {
             await LoadViewBags();
             return View();
         }
 
-        // POST: Запустить в производство
         [HttpPost]
         public async Task<IActionResult> Create(int productId, int quantity, int lineId)
         {
-            if (quantity <= 0)
-            {
-                ModelState.AddModelError("", "Количество должно быть больше нуля!");
-                await LoadViewBags();
-                return View();
-            }
-
-            // Получаем продукт вместе с привязанными материалами
-            var product = await _context.Products
-                .Include(p => p.ProductMaterials)
-                .ThenInclude(pm => pm.Material)
-                .FirstOrDefaultAsync(p => p.Id == productId);
-
-            if (product == null) return NotFound();
-
+            var product = await _context.Products.Include(p => p.ProductMaterials).ThenInclude(pm => pm.Material).FirstOrDefaultAsync(p => p.Id == productId);
             var line = await _context.ProductionLines.FindAsync(lineId);
-            if (line == null) return NotFound();
 
-            // 1. Проверка: хватает ли материалов на складе
+            if (product == null || line == null || quantity <= 0) return RedirectToAction("Index");
+
             foreach (var pm in product.ProductMaterials)
             {
-                var totalNeeded = pm.QuantityNeeded * quantity;
-                if (pm.Material.Quantity < totalNeeded)
+                if (pm.Material.Quantity < pm.QuantityNeeded * quantity)
                 {
-                    ModelState.AddModelError("", $"На складе не хватает: {pm.Material.Name}. Нужно: {totalNeeded}, В наличии: {pm.Material.Quantity}");
+                    ModelState.AddModelError("", $"Недостаточно материала: {pm.Material.Name}");
                     await LoadViewBags();
                     return View();
                 }
             }
 
-            // 2. Если всё хватает -> списываем материалы со склада
-            foreach (var pm in product.ProductMaterials)
-            {
-                pm.Material.Quantity -= (pm.QuantityNeeded * quantity);
-            }
+            foreach (var pm in product.ProductMaterials) { pm.Material.Quantity -= (pm.QuantityNeeded * quantity); }
 
-            // 3. Авторасчет времени (Формула из задания)
-            double efficiency = line.EfficiencyFactor > 0 ? line.EfficiencyFactor : 1.0;
-            double totalMinutes = (quantity * product.ProductionTimePerUnit) / efficiency;
+            int activeCount = _context.WorkOrders.Count(w => w.ProductionLineId == lineId && w.Status == "InProgress");
+            double totalProdMinutes = quantity * product.ProductionTimePerUnit;
+            double realMinutesNeeded = totalProdMinutes / (line.EfficiencyFactor > 0 ? line.EfficiencyFactor : 1.0);
 
-            // 4. Создаем заказ
             var order = new WorkOrder
             {
                 ProductId = productId,
                 ProductionLineId = lineId,
                 Quantity = quantity,
+                Status = activeCount < 7 ? "InProgress" : "Pending",
                 StartDate = DateTime.Now,
-                EstimatedEndDate = DateTime.Now.AddMinutes(totalMinutes),
-                Status = "InProgress" // Ставим статус "В процессе"
+                EstimatedEndDate = DateTime.Now.AddMinutes(realMinutesNeeded)
             };
 
-            // 5. Обновляем статус линии
-            line.Status = "Active";
+            if (order.Status == "InProgress") line.Status = "Active";
 
             _context.WorkOrders.Add(order);
             await _context.SaveChangesAsync();
-
-            // Привязываем заказ к линии после сохранения (нужен ID заказа)
-            line.CurrentWorkOrderId = order.Id;
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index", "WorkOrders");
         }
 
-        // POST: Отменить заказ
         [HttpPost]
         public async Task<IActionResult> Cancel(int id)
         {
-            var order = await _context.WorkOrders.FindAsync(id);
-            if (order != null && order.Status == "InProgress")
+            var order = await _context.WorkOrders.Include(o => o.ProductionLine).FirstOrDefaultAsync(o => o.Id == id);
+            if (order != null)
             {
                 order.Status = "Cancelled";
-                
-                // Освобождаем производственную линию
-                var line = await _context.ProductionLines.FirstOrDefaultAsync(l => l.Id == order.ProductionLineId);
+                var line = order.ProductionLine;
                 if (line != null)
                 {
-                    line.Status = "Stopped";
-                    line.CurrentWorkOrderId = null;
+                    var next = _context.WorkOrders.Where(w => w.ProductionLineId == line.Id && w.Status == "Pending").OrderBy(w => w.Id).FirstOrDefault();
+                    if (next != null)
+                    {
+                        var p = _context.Products.Find(next.ProductId);
+                        next.Status = "InProgress";
+                        next.StartDate = DateTime.Now;
+                        double totalWork = next.Quantity * (p?.ProductionTimePerUnit ?? 1);
+                        next.EstimatedEndDate = DateTime.Now.AddMinutes(totalWork / line.EfficiencyFactor);
+                    }
+                    if (!_context.WorkOrders.Any(w => w.ProductionLineId == line.Id && w.Status == "InProgress")) line.Status = "Stopped";
                 }
-
                 await _context.SaveChangesAsync();
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index");
         }
 
-        // Вспомогательный метод для загрузки выпадающих списков
         private async Task LoadViewBags()
         {
             ViewBag.Products = new SelectList(await _context.Products.ToListAsync(), "Id", "Name");
-            // Показываем только свободные линии (Status == Stopped)
-            var availableLines = await _context.ProductionLines.Where(l => l.Status == "Stopped").ToListAsync();
-            ViewBag.Lines = new SelectList(availableLines, "Id", "Name");
+            ViewBag.Lines = new SelectList(await _context.ProductionLines.ToListAsync(), "Id", "Name");
         }
     }
 }

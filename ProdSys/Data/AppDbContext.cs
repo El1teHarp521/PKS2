@@ -20,13 +20,8 @@ namespace ProdSys.Data
 
             modelBuilder.Entity<WorkOrder>()
                 .HasOne(w => w.ProductionLine)
-                .WithMany()
+                .WithMany(l => l.WorkOrders)
                 .HasForeignKey(w => w.ProductionLineId);
-
-            modelBuilder.Entity<ProductionLine>()
-                .HasOne(l => l.CurrentWorkOrder)
-                .WithMany()
-                .HasForeignKey(l => l.CurrentWorkOrderId);
 
             modelBuilder.Entity<ProductionLine>().HasData(
                 new ProductionLine { Id = 1, Name = "Линия А (Сборка)", Status = "Stopped", EfficiencyFactor = 1.0f },
@@ -39,7 +34,7 @@ namespace ProdSys.Data
             );
 
             modelBuilder.Entity<Product>().HasData(
-                new Product { Id = 1, Name = "Корпус системного блока", Category = "Комплектующие", MinimalStock = 10, ProductionTimePerUnit = 30 }
+                new Product { Id = 1, Name = "Корпус системного блока", Category = "Комплектующие", Quantity = 5, MinimalStock = 10, ProductionTimePerUnit = 30 }
             );
 
             modelBuilder.Entity<ProductMaterial>().HasData(

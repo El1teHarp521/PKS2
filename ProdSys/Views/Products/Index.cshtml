@@ -1,61 +1,67 @@
 @model IEnumerable<ProdSys.Models.Product>
-@{
-    ViewData["Title"] = "Продукты";
-}
+@{ ViewData["Title"] = "Продукты"; }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold">Панель продуктов</h2>
     <a asp-action="Create" class="btn btn-primary">Создать продукт</a>
 </div>
 
-<!-- Блок фильтрации и поиска -->
 <div class="card shadow-sm border-0 mb-4 bg-light">
     <div class="card-body">
         <form asp-action="Index" method="get" class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label class="form-label fw-bold">Поиск по названию:</label>
-                <input type="text" name="searchString" class="form-control" placeholder="Введите название...">
+                <input type="text" name="searchString" class="form-control" placeholder="Поиск по названию...">
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-bold">Фильтр по категории:</label>
                 <select name="category" class="form-select">
                     <option value="">Все категории</option>
-                    @if(ViewBag.Categories != null)
-                    {
-                        foreach (var cat in ViewBag.Categories)
-                        {
-                            <option value="@cat">@cat</option>
-                        }
+                    @if(ViewBag.Categories != null) {
+                        foreach (var cat in ViewBag.Categories) { <option value="@cat">@cat</option> }
                     }
                 </select>
             </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-dark w-100">Применить фильтры</button>
-            </div>
+            <div class="col-md-4"><button type="submit" class="btn btn-dark w-100">Фильтр</button></div>
         </form>
     </div>
 </div>
 
-<!-- Таблица продуктов -->
 <div class="card shadow-sm border-0">
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
             <thead class="table-dark">
                 <tr>
                     <th>Название</th>
-                    <th>Категория</th>
-                    <th>Время производства (мин/шт)</th>
-                    <th>Мин. запас</th>
+                    <th style="width: 25%;">Запас на складе</th>
+                    <th>Кол-во</th>
+                    <th>Время (мин)</th>
+                    <th>Состав</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in Model)
                 {
+                    string colorClass = "bg-danger"; 
+                    if (item.Quantity >= item.MinimalStock * 1.5m) { colorClass = "bg-success"; } 
+                    else if (item.Quantity >= item.MinimalStock) { colorClass = "bg-warning text-dark"; }
+
+                    decimal maxVisual = item.MinimalStock > 0 ? item.MinimalStock * 3.0m : 100;
+                    decimal percent = item.MinimalStock > 0 ? ((decimal)item.Quantity / maxVisual) * 100 : 100;
+                    if (percent > 100) percent = 100;
+                    if (percent < 5) percent = 5;
+
                     <tr class="align-middle">
-                        <td class="fw-bold text-primary">@item.Name</td>
-                        <td><span class="badge bg-secondary">@item.Category</span></td>
-                        <td><i class="bi bi-clock"></i> @item.ProductionTimePerUnit мин.</td>
-                        <td>@item.MinimalStock шт.</td>
+                        <td class="fw-bold text-primary">@item.Name <br><span class="badge bg-secondary">@item.Category</span></td>
+                        <td>
+                            <div class="progress" style="height: 15px;">
+                                <div class="progress-bar @colorClass progress-bar-striped" role="progressbar" style="width: @percent.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%;"></div>
+                            </div>
+                            <small class="text-muted">Мин: @item.MinimalStock</small>
+                        </td>
+                        <td class="fw-bold fs-5">@item.Quantity шт.</td>
+                        <td><i class="bi bi-clock"></i> @item.ProductionTimePerUnit</td>
+                        <td>
+                            <a asp-action="Composition" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white fw-bold">Состав</a>
+                        </td>
                     </tr>
                 }
             </tbody>
