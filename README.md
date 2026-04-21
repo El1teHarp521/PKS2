@@ -16,4 +16,5 @@ cd MonitorSys
 ### Контрольная работа 4
 ```bash
 cd TouristGuide
+cd ProdSys
 ```
