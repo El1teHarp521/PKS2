@@ -1,0 +1,67 @@
+@model ProdSys.Models.WorkOrder
+@{
+    ViewData["Title"] = "Новый заказ";
+}
+
+<h2 class="fw-bold mb-4">Назначить заказ в производство</h2>
+
+<!-- Вывод ошибок (например, нехватка материалов) -->
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger shadow-sm">
+        <h5 class="alert-heading">Ошибка запуска!</h5>
+        <div asp-validation-summary="All" class="mb-0 text-danger fw-bold"></div>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Выберите продукт для производства</label>
+                        <select name="productId" asp-items="ViewBag.Products" class="form-select form-select-lg" required>
+                            <option value="">-- Выберите продукт --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Количество единиц</label>
+                        <input type="number" name="quantity" class="form-control form-control-lg" min="1" value="10" required />
+                        <div class="form-text">Система автоматически рассчитает сроки и спишет нужные материалы.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Назначить на производственную линию</label>
+                        <select name="lineId" asp-items="ViewBag.Lines" class="form-select form-select-lg" required>
+                            <option value="">-- Выберите доступную линию --</option>
+                        </select>
+                        <div class="form-text text-success">В списке отображаются только свободные линии.</div>
+                    </div>
+
+                    <hr />
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-lg">Назад к списку</a>
+                        <button type="submit" class="btn btn-success btn-lg px-4"><i class="bi bi-play-fill"></i> Запустить в производство</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card bg-light border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title fw-bold text-primary"><i class="bi bi-info-circle"></i> Как это работает?</h5>
+                <ul class="list-group list-group-flush bg-transparent mt-3">
+                    <li class="list-group-item bg-transparent">1. Выбираете продукт.</li>
+                    <li class="list-group-item bg-transparent">2. Система проверяет, хватает ли <strong>материалов</strong> на складе.</li>
+                    <li class="list-group-item bg-transparent text-danger fw-bold">3. Если материалов мало — система не даст запустить линию!</li>
+                    <li class="list-group-item bg-transparent">4. Система рассчитает дату завершения с учетом эффективности выбранной линии.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,72 @@
+@model IEnumerable<ProdSys.Models.WorkOrder>
+@{
+    ViewData["Title"] = "Заказы на производство";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Панель заказов</h2>
+    <a asp-action="Create" class="btn btn-success"><i class="bi bi-play-circle"></i> Запустить новый заказ</a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>№ Заказа</th>
+                    <th>Продукт</th>
+                    <th>Кол-во</th>
+                    <th>Линия</th>
+                    <th>Срок выполнения (Расчетный)</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="align-middle">
+                        <td class="fw-bold">#ORD-@item.Id.ToString("D4")</td>
+                        <td class="text-primary fw-bold">@item.Product.Name</td>
+                        <td>@item.Quantity шт.</td>
+                        <td>@(item.ProductionLine != null ? item.ProductionLine.Name : "Не назначена")</td>
+                        <td>@item.EstimatedEndDate.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            @if (item.Status == "InProgress")
+                            {
+                                <span class="badge bg-primary fs-6">В процессе</span>
+                            }
+                            else if (item.Status == "Cancelled")
+                            {
+                                <span class="badge bg-danger fs-6">Отменен</span>
+                            }
+                            else if (item.Status == "Completed")
+                            {
+                                <span class="badge bg-success fs-6">Завершен</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6">Ожидает</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Status == "InProgress")
+                            {
+                                <form asp-action="Cancel" method="post" onsubmit="return confirm('Вы уверены, что хотите отменить этот заказ? Линия будет остановлена.');">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Отменить заказ</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">Активных заказов пока нет. Запустите производство!</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

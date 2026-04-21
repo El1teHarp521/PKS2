@@ -1,0 +1,90 @@
+@model IEnumerable<ProdSys.Models.ProductionLine>
+@{
+    ViewData["Title"] = "Мониторинг линий";
+}
+
+<h2 class="fw-bold mb-4">Интерактивная панель производственных линий</h2>
+
+<div class="row g-4">
+    @foreach (var line in Model)
+    {
+        <div class="col-md-6">
+            <div class="card shadow border-0 h-100 @(line.Status == "Active" ? "border-primary border-top border-4" : "border-secondary border-top border-4")">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold m-0">@line.Name</h4>
+                        @if (line.Status == "Active")
+                        {
+                            <span class="badge bg-success fs-6"><i class="bi bi-gear-fill spin"></i> В РАБОТЕ</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary fs-6">ОСТАНОВЛЕНА</span>
+                        }
+                    </div>
+
+                    @if (line.Status == "Active" && line.CurrentWorkOrder != null)
+                    {
+                        var order = line.CurrentWorkOrder;
+                        
+                        // Вычисляем процент готовности заказа по времени
+                        double totalSeconds = (order.EstimatedEndDate - order.StartDate).TotalSeconds;
+                        double elapsedSeconds = (DateTime.Now - order.StartDate).TotalSeconds;
+                        double progress = (elapsedSeconds / totalSeconds) * 100;
+                        if (progress > 100) progress = 100;
+                        if (progress < 0) progress = 0;
+
+                        <div class="bg-light p-3 rounded mb-4">
+                            <h5 class="text-primary fw-bold">@order.Product.Name</h5>
+                            <p class="mb-1 text-muted">Заказ #ORD-@order.Id.ToString("D4") | <strong>@order.Quantity шт.</strong></p>
+                            <p class="mb-2 text-muted small">Окончание: @order.EstimatedEndDate.ToString("HH:mm dd.MM.yyyy")</p>
+                            
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: @((int)progress)%;" aria-valuenow="@((int)progress)" aria-valuemin="0" aria-valuemax="100">
+                                    <span class="fw-bold">@((int)progress)%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <form asp-action="StopLine" method="post" onsubmit="return confirm('Вы уверены? Заказ будет отменен!');">
+                                <input type="hidden" name="lineId" value="@line.Id" />
+                                <button type="submit" class="btn btn-outline-danger">Аварийная остановка</button>
+                            </form>
+                            
+                            @if(progress >= 100)
+                            {
+                                <form asp-action="CompleteOrder" method="post">
+                                    <input type="hidden" name="lineId" value="@line.Id" />
+                                    <button type="submit" class="btn btn-success fw-bold">Снять заказ (Завершено)</button>
+                                </form>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary text-center py-4 mb-4">
+                            <p class="mb-0">Линия свободна. Назначьте заказ через панель <a asp-controller="WorkOrders" asp-action="Index" class="fw-bold">Заказов</a>.</p>
+                        </div>
+                    }
+
+                    <hr />
+                    <!-- Настройка эффективности линии -->
+                    <form asp-action="UpdateEfficiency" method="post" class="d-flex align-items-center">
+                        <input type="hidden" name="lineId" value="@line.Id" />
+                        <label class="me-3 fw-bold small">Эффективность (0.5 - 2.0):</label>
+                        <input type="number" name="efficiency" value="@line.EfficiencyFactor.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)" step="0.1" min="0.5" max="2.0" class="form-control form-control-sm w-25 me-2" />
+                        <button type="submit" class="btn btn-sm btn-dark">Применить</button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    /* Анимация крутящейся шестеренки */
+    @@keyframes spin { 100% { transform: rotate(360deg); } }
+    .spin { animation: spin 2s linear infinite; display: inline-block; }
+</style>
