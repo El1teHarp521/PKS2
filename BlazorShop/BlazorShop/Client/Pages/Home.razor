@@ -1,0 +1,95 @@
+﻿@page "/"
+@using Shared
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Управление товарами</h2>
+        <button class="btn btn-outline-secondary" @onclick="ToggleTheme">Сменить тему</button>
+    </div>
+
+    <div class="card shadow-sm p-4 mb-5">
+        <h5>@(model.Id == 0 ? "Добавить новый товар" : "Редактировать товар")</h5>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Название</label>
+                <input class="form-control" @bind="model.Name" placeholder="Название товара" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Цена</label>
+                <input class="form-control" type="number" @bind="model.Price" />
+            </div>
+            <div class="col-12">
+                <label class="form-label">Описание</label>
+                <textarea class="form-control" @bind="model.Description" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+                <button class="btn btn-success" @onclick="Save">Сохранить</button>
+                @if (model.Id != 0) {
+                    <button class="btn btn-link" @onclick="() => model = new()">Отмена</button>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (products == null) {
+        <div class="text-center"><div class="spinner-border"></div><p>Загрузка данных...</p></div>
+    } else {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Название</th>
+                        <th>Цена</th>
+                        <th>Описание</th>
+                        <th style="width: 250px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in products) {
+                        <tr>
+                            <td><strong>@p.Name</strong></td>
+                            <td>@p.Price.ToString("N2") ₽</td>
+                            <td>@p.Description</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary me-2" @onclick="() => model = p">Изменить</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => Delete(p)">Удалить</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Product>? products;
+    private Product model = new();
+
+    protected override async Task OnInitializedAsync() => await Refresh();
+
+    async Task Refresh() {
+        try { products = await Http.GetFromJsonAsync<List<Product>>("api/products"); }
+        catch { products = new(); }
+    }
+
+    async Task Save() {
+        if (string.IsNullOrWhiteSpace(model.Name)) return;
+        if (model.Id == 0) await Http.PostAsJsonAsync("api/products", model);
+        else await Http.PutAsJsonAsync("api/products", model);
+        model = new();
+        await Refresh();
+    }
+
+    async Task Delete(Product p) {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Вы действительно хотите удалить '{p.Name}'?");
+        if (confirmed) {
+            await Http.DeleteAsync($"api/products/{p.Id}");
+            await Refresh();
+        }
+    }
+
+    async Task ToggleTheme() => await JS.InvokeVoidAsync("eval", "document.body.classList.toggle('dark-mode')");
+}
