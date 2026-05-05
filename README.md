@@ -18,3 +18,11 @@ cd MonitorSys
 cd TouristGuide
 cd ProdSys
 ```
+
+### Контрольная работа 5
+```bash
+cd BlazorShop
+cd BlazorShop
+cd Server (БД)
+cd Client (Фронтэнд)
+```
